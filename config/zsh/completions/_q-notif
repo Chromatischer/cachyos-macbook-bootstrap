@@ -1,0 +1,4 @@
+#compdef q-notif
+
+local -a subcmds=(list history pop read empty dismiss dnd restore)
+(( CURRENT == 2 )) && _describe -t subcmds 'action' subcmds

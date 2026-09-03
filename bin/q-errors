@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# q-errors — recent log errors, deduplicated.
+#
+# Usage:
+#   q-errors            user units, last hour
+#   q-errors 24h        custom window (accepts journalctl timespecs)
+#   q-errors -s         include the system journal too (needs perms)
+set -u
+
+since="-1h"
+sys=""
+for a in "$@"; do
+    case "$a" in
+        -s) sys="-1" ;;
+        *)  since="-$a" ;;
+    esac
+done
+
+{
+    journalctl --user -p warning --since "$since" --no-pager 2>/dev/null
+    [ -n "$sys" ] && sudo journalctl -p err --since "$since" --no-pager 2>/dev/null
+} | awk '
+    !seen[substr($0, index($0, "]") + 2)]++' | head -60

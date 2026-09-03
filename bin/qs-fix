@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# qs-restart — restart quickshell, or auto-fix it when it's gone phantom.
+#
+# Usage:
+#   qs-restart          restart unconditionally
+#   qs-fix              alias: only restart if the phantom-screen bug is detected
+#   qs-restart --force  same as plain qs-restart
+#
+# The known failure mode: after suspend / monitor changes quickshell latches
+# onto a placeholder "FALLBACK" screen ("There are no outputs - creating
+# placeholder screen" in its log). IPC calls still succeed but nothing renders.
+
+set -u
+
+CONF="${QS_CONF:-redesign}"
+
+is_running() {
+    friend-shell list --all 2>/dev/null | grep -q "Config path: .*${CONF}"
+}
+
+log_file() {
+    # newest log.qslog across running instances of this config
+    find "/run/user/$(id -u)/quickshell" -name log.qslog 2>/dev/null | xargs -r ls -t 2>/dev/null | head -1
+}
+
+phantom_detected() {
+    local lf; lf="$(log_file)"
+    [ -n "$lf" ] || return 1
+    grep -aq "creating placeholder screen" "$lf" &&
+    grep -aq 'monitor "FALLBACK"' "$lf"
+}
+
+do_restart() {
+    echo "killing ${CONF} instance(s)..."
+    friend-shell kill 2>/dev/null
+    sleep 1
+    nohup friend-shell -d >/dev/null 2>&1 &
+    # wait for the instance to register
+    for _ in $(seq 1 20); do
+        sleep 0.5
+        is_running && { echo "quickshell '${CONF}' restarted ✓"; return 0; }
+    done
+    echo "warning: instance did not come up within 10s" >&2
+    return 1
+}
+
+case "${0##*/}" in
+    qs-fix)
+        if ! is_running; then
+            echo "quickshell '${CONF}' not running — starting..."
+            do_restart
+        elif phantom_detected; then
+            echo "phantom screen detected — restarting..."
+            do_restart
+        else
+            echo "quickshell looks healthy — nothing to do"
+        fi
+        ;;
+    *)
+        do_restart
+        ;;
+esac

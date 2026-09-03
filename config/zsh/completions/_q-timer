@@ -1,0 +1,13 @@
+#compdef q-timer
+
+if (( CURRENT == 2 )); then
+    _alternative \
+        'subcommands:subcommand:(list cancel)' \
+        'durations:duration:(30s 1m 5m 10m 15m 25m 45m 1h 1h30m)'
+else
+    case $words[2] in
+        cancel) _values 'timer id' $(basename -a /tmp/q-timers/* 2>/dev/null) ;;
+        list|cancel) ;;
+        *) _message 'label' ;;
+    esac
+fi

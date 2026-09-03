@@ -1,0 +1,10 @@
+profile.env
+hardware-report*.txt
+*.log
+.cache/
+.state/
+backups/
+*.bak
+*.tmp
+*secret*
+*credentials*

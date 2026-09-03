@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# q-brightness — control the internal display without selecting the Touch Bar.
+set -Eeuo pipefail
+
+pick_device() {
+  local candidate max
+  for candidate in intel_backlight acpi_video0; do
+    if [[ -e "/sys/class/backlight/$candidate" ]]; then
+      max="$(cat "/sys/class/backlight/$candidate/max_brightness")"
+      ((max > 2)) && { printf '%s\n' "$candidate"; return; }
+    fi
+  done
+  find /sys/class/backlight -mindepth 1 -maxdepth 1 -printf '%f\n' |
+    grep -vE '^(appletb_|.*kbd_)' | head -1
+}
+
+device="${SCREEN_BACKLIGHT_DEVICE:-$(pick_device)}"
+[[ -n "$device" ]] || {
+  echo "screen backlight device not found; reboot once after installing the T2 backlight fix" >&2
+  exit 1
+}
+
+percent() {
+  brightnessctl -d "$device" -m | cut -d, -f4 | tr -d '%'
+}
+
+case "${1:-status}" in
+  get) percent ;;
+  status) printf '%s: %s%%\n' "$device" "$(percent)" ;;
+  up) brightnessctl -q -d "$device" set "${2:-5}%+"; percent ;;
+  down) brightnessctl -q -d "$device" set "${2:-5}%-"; percent ;;
+  set)
+    [[ "${2:-}" =~ ^[0-9]+$ ]] || { echo "usage: q-brightness set <0-100>" >&2; exit 1; }
+    brightnessctl -q -d "$device" set "$2%"
+    percent
+    ;;
+  *) echo "usage: q-brightness [status|get|up [N]|down [N]|set N]" >&2; exit 1 ;;
+esac

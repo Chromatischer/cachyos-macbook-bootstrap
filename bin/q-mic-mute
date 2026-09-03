@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# q-mic-mute — toggle the default input source.
+set -u
+wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+state=$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@)
+if echo "$state" | grep -q MUTED; then
+    echo "microphone muted [mic x]"
+else
+    echo "microphone live [mic]"
+fi

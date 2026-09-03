@@ -1,0 +1,7 @@
+# Optional AUR applications. Programs are installed; account profiles are never copied.
+claude-code
+opencode-bin
+typora
+vesktop
+zen-browser-bin
+

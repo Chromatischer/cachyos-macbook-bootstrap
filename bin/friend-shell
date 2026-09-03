@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Quickshell can be installed system-wide or as the bootstrap's unprivileged
+# fallback. Keeping paths here avoids leaking them into every Hyprland bind.
+export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin${PATH:+:$PATH}"
+export LD_LIBRARY_PATH="$HOME/.local/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export QML2_IMPORT_PATH="$HOME/.local/lib/qt6/qml${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}"
+export QT_PLUGIN_PATH="$HOME/.local/lib/qt6/plugins${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
+
+if command -v qs >/dev/null 2>&1; then
+    exec qs -c redesign "$@"
+fi
+
+exec "$HOME/.local/bin/quickshell" -c redesign "$@"

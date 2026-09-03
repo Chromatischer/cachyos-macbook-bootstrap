@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# q-port — who is squatting a TCP port?
+#
+# Usage:
+#   q-port 3000         show listeners on port 3000
+#   q-port 3000 kill    kill the listener(s) after showing them
+set -u
+
+PORT="${1:-}"
+[ -z "$PORT" ] && { echo "usage: q-port <port> [kill]" >&2; exit 1; }
+
+info=$(ss -ltnp "sport = :$PORT" 2>/dev/null | tail -n+2)
+[ -z "$info" ] && { echo "nothing listening on :$PORT"; exit 0; }
+
+echo "$info"
+pids=$(grep -oP 'pid=\K[0-9]+' <<<"$info" | sort -u)
+
+case "${2:-}" in
+    kill)
+        for p in $pids; do
+            pname=$(ps -o comm= -p "$p")
+            read -r "reply?kill $pname (pid $p)? [y/N] "
+            [[ $reply == y* ]] && kill "$p" && echo "killed $p ($pname)"
+        done
+        ;;
+esac

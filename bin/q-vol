@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# q-vol — volume control on the default output.
+#
+# Usage:
+#   q-vol            current level
+#   q-vol up|down    step 5% (or q-vol up 10)
+#   q-vol N          set absolute percent
+#   q-vol mute|unmute|toggle
+set -u
+
+SINK=@DEFAULT_AUDIO_SINK@
+STEP=${2:-5}
+
+case "${1:-status}" in
+    up)     wpctl set-volume "$SINK" "$STEP%+" -l 1.5 ;;
+    down)   wpctl set-volume "$SINK" "$STEP%-" ;;
+    mute)   wpctl set-mute "$SINK" true ;;
+    unmute) wpctl set-mute "$SINK" false ;;
+    toggle) wpctl set-mute "$SINK" toggle ;;
+    status) ;;
+    ''|*[!0-9]*)
+        echo "usage: q-vol [up|down|N|mute|unmute|toggle] [step]" >&2; exit 1 ;;
+    *)      wpctl set-volume "$SINK" "$1%" ;;
+esac
+
+state=$(wpctl get-volume "$SINK")
+vol=$(awk '{printf "%d%%", $2*100}' <<<"$state")
+echo "$state" | grep -q MUTED && echo "volume: $vol (muted)" || echo "volume: $vol"

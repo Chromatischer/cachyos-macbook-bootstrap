@@ -1,0 +1,10 @@
+#compdef q-vol
+
+local -a actions=(up down mute unmute toggle status)
+if (( CURRENT == 2 )); then
+    _alternative \
+        "actions:action:(${actions[*]})" \
+        'levels:absolute percent:(0 10 20 30 40 50 60 70 80 90 100)'
+elif (( CURRENT == 3 )); then
+    _values 'step' 1 2 5 10 15 20
+fi

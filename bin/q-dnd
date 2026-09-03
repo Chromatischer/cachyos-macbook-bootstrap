@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# q-dnd — control Quickshell notification do-not-disturb mode.
+set -u
+
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/chromatischer-rice/dnd"
+mkdir -p "$(dirname "$STATE")"
+
+case "${1:-toggle}" in
+    on) mode=on ;;
+    off) mode=off ;;
+    toggle) [[ "$(cat "$STATE" 2>/dev/null)" == on ]] && mode=off || mode=on ;;
+    status) mode="$(cat "$STATE" 2>/dev/null || echo off)"; echo "notifications: $mode"; exit ;;
+    *) echo "usage: q-dnd [on|off|toggle|status]" >&2; exit 1 ;;
+esac
+
+friend-shell ipc call notifications dnd "$mode" >/dev/null
+printf '%s\n' "$mode" > "$STATE"
+[[ "$mode" == on ]] && echo "notifications muted" || echo "notifications on"

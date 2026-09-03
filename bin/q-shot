@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# q-shot — screenshots, including by window (titles tab-complete in zsh).
+#
+# Usage:
+#   q-shot                 region select
+#   q-shot full            full screen
+#   q-shot --pick          pick window via fuzzel
+#   q-shot <title/class>   window by fuzzy match (TAB-completes)
+#
+# Strictly non-disturbing: never moves focus, windows or the scrolling view.
+# Only windows currently visible on screen can be captured — scroll them into
+# view yourself first if needed. (grim captures rendered pixels; a window
+# parked outside the viewport has none.)
+#
+# Saves to ~/Pictures/Screenshots and copies to clipboard.
+set -u
+
+DIR="$HOME/Pictures/Screenshots"
+mkdir -p "$DIR"
+FILE="$DIR/screenshot-$(date +%Y-%m-%d_%H-%M-%S).png"
+
+# ── helpers ──────────────────────────────────────────────────────────────
+geom_of() {
+    hyprctl clients -j | jq -r --arg a "$1" \
+        '.[] | select(.address == $a) | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"'
+}
+
+# does a "X,Y WxH" geometry overlap any connected output?
+intersects() {
+    local gx=${1%%,*} rest=${1#*,}
+    local gy=${rest%% *} dims=${rest#* }
+    local gw=${dims%x*} gh=${dims#*x}
+    hyprctl monitors -j | jq -e --argjson gx "$gx" --argjson gy "$gy" \
+        --argjson gw "$gw" --argjson gh "$gh" \
+        'map(.x < $gx+$gw and .x+.width > $gx and .y < $gy+$gh and .y+.height > $gy)
+         | any' >/dev/null
+}
+
+finish() {
+    # detach clipboard/notification children from our stdio so callers
+    # waiting on EOF aren't blocked by wl-copy's forked server
+    setsid wl-copy < "$FILE" >/dev/null 2>&1 </dev/null
+    setsid notify-send "Screenshot" "saved + copied: $(basename "$FILE")" \
+        >/dev/null 2>&1 </dev/null || true
+    echo "$FILE"
+}
+
+shot_geom() {
+    grim -g "$1" "$FILE" && [ -s "$FILE" ] && finish || { echo "screenshot failed" >&2; exit 1; }
+}
+
+resolve_window() {
+    entry=$(hyprctl clients -j | jq -r '.[] | select(.title != "") |
+            "\(.address)\t\(.title) [\(.class)]"' | grep -iF -- "$*" | head -1)
+    [ -n "$entry" ] || { echo "no window matching '$*'" >&2; exit 1; }
+    ADDR=${entry%%$'\t'*}
+    echo "shooting: ${entry#*$'\t'}" >&2
+}
+
+shot_window_quiet() {
+    local geom; geom=$(geom_of "$ADDR")
+    if intersects "$geom"; then
+        shot_geom "$geom"
+    else
+        echo "window not in view — scroll it into view first, then re-run" >&2
+        exit 2
+    fi
+}
+
+# ── main ─────────────────────────────────────────────────────────────────
+case "${1:-}" in
+    ""|region)
+        geom=$(slurp) && shot_geom "$geom"
+        ;;
+    full)
+        grim "$FILE" && finish
+        ;;
+    --pick)
+        entry=$(hyprctl clients -j | jq -r '.[] | select(.title != "") |
+                "\(.address)\t\(.title) [\(.class)]"' |
+                fuzzel --dmenu --prompt "shot: ") || exit 1
+        ADDR=${entry%%$'\t'*}
+        echo "shooting: ${entry#*$'\t'}" >&2
+        shot_window_quiet
+        ;;
+    *)
+        resolve_window "$@"
+        shot_window_quiet
+        ;;
+esac

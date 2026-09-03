@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# q-battery-saver — toggle an available charge limit (80% cap).
+#
+# Usage:
+#   battery-saver          show status
+#   battery-saver on       cap charge at 80%
+#   battery-saver off      charge to 100%
+#   battery-saver toggle   flip between the two
+set -u
+
+BAT="${BATTERY_DEVICE:-$(find /sys/class/power_supply -maxdepth 1 -type l -name 'BAT*' | head -1)}"
+THRESH=80
+
+[[ -n "$BAT" && -r "$BAT/capacity" ]] || { echo "battery not found" >&2; exit 1; }
+[[ -e "$BAT/charge_control_end_threshold" ]] || {
+    echo "this battery driver does not expose a charge-limit control"
+    echo "battery: $(cat "$BAT/capacity")% ($(cat "$BAT/status"))"
+    exit 2
+}
+
+cur() { cat "$BAT/charge_control_end_threshold"; }
+
+set_threshold() {
+    if ! echo "$1" | sudo -p "battery limit → $1% (sudo) " tee "$BAT/charge_control_end_threshold" >/dev/null; then
+        echo "failed to set threshold" >&2
+        exit 1
+    fi
+}
+
+case "${1:-status}" in
+    on)     set_threshold "$THRESH" ;;
+    off)    set_threshold 100 ;;
+    toggle)
+        [ "$(cur)" -le "$THRESH" ] && set_threshold 100 || set_threshold "$THRESH"
+        ;;
+    status) ;;
+    *) echo "usage: q-battery-saver [on|off|toggle|status]" >&2; exit 1 ;;
+esac
+
+cap=$(cur)
+soc=$(cat "$BAT/capacity")
+status=$(cat "$BAT/status")
+health=$(cat "$BAT/health" 2>/dev/null || echo unknown)
+state="charging to $cap"
+[ "$cap" = "100" ] || state="capped at $cap"
+echo "battery: ${soc}% ($status, $state, health $health)"

@@ -1,0 +1,27 @@
+#compdef q-shot
+# complete window titles/classes for q-shot
+
+_q-shot_windows() {
+    local -a windows
+    while IFS=$'\t' read -r addr entry; do
+        windows+=("$entry")
+    done < <(hyprctl clients -j 2>/dev/null | jq -r '.[] | select(.title != "") |
+             "\(.address)\t\(.title) [\(.class)]"')
+    _describe -t windows 'window' windows
+}
+
+_q-shot() {
+    _arguments \
+        '1: :->mode'
+    case $state in
+        mode)
+            if (( CURRENT <= 2 )); then
+                _alternative \
+                    'modes:mode:(full --pick)' \
+                    'windows:window:_q-shot_windows'
+            fi
+            ;;
+    esac
+}
+
+_q-shot "$@"

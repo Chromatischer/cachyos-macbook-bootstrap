@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# q-notif — Quickshell notification control.
+#
+# Usage:
+#   notif list              current notifications
+#   notif history           notification history (read ones)
+#   notif pop               re-show the most recent expired notification
+#   notif read              dismiss all (into history)
+#   notif empty             dismiss all AND wipe history
+#   notif dismiss [id]      dismiss one notification
+#   notif restore           alias for pop
+#   notif dnd               toggle do-not-disturb (see: q-dnd)
+set -u
+
+cmd="${1:-list}"
+
+case "$cmd" in
+    list|history)
+        jq -r '.[] | "\(.app): \(.summary)\n  \(.body)"' \
+            "$HOME/.cache/qs-notif-history.json" 2>/dev/null || echo "notification history is empty"
+        ;;
+    pop|restore)
+        echo "restore is not supported by the Quickshell notification server" >&2
+        exit 2
+        ;;
+    read)
+        friend-shell ipc call notifications dismiss >/dev/null
+        echo "current notification dismissed"
+        ;;
+    empty|clear)
+        friend-shell ipc call notifications clear >/dev/null
+        echo "notifications emptied"
+        ;;
+    dismiss)
+        friend-shell ipc call notifications dismiss >/dev/null
+        echo "current notification dismissed"
+        ;;
+    dnd)
+        exec q-dnd
+        ;;
+    *)
+        echo "usage: q-notif [list|history|pop|read|empty|dismiss|dnd]" >&2
+        exit 1
+        ;;
+esac

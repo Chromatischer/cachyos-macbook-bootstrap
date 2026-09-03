@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+raw_monitors="$(hyprctl monitors -j)" || {
+  echo 'Cannot contact Hyprland; run this command inside the desktop session.' >&2
+  exit 1
+}
+monitor_json="$(jq -c '.[] | select(.focused == true)' <<<"$raw_monitors")"
+[[ -n "$monitor_json" ]] || { echo 'No focused monitor found.' >&2; exit 1; }
+
+name="$(jq -r '.name' <<<"$monitor_json")"
+width="$(jq -r '.width' <<<"$monitor_json")"
+height="$(jq -r '.height' <<<"$monitor_json")"
+rate="$(jq -r '.refreshRate' <<<"$monitor_json")"
+position="$(jq -r '"\(.x)x\(.y)"' <<<"$monitor_json")"
+current="$(jq -r '.scale' <<<"$monitor_json")"
+scales=(1 1.25 1.6 2 3)
+
+index="$(awk -v current="$current" -v scales="${scales[*]}" 'BEGIN {
+  count = split(scales, value, " "); closest = 1; distance = 999;
+  for (i = 1; i <= count; i++) {
+    delta = current - value[i]; if (delta < 0) delta = -delta;
+    if (delta < distance) { distance = delta; closest = i; }
+  }
+  print closest - 1;
+}')"
+
+if [[ "${1:-}" == --reverse ]]; then
+  next=$(( (index - 1 + ${#scales[@]}) % ${#scales[@]} ))
+else
+  next=$(( (index + 1) % ${#scales[@]} ))
+fi
+scale="${scales[$next]}"
+
+hyprctl keyword monitor "$name,${width}x${height}@${rate},${position},${scale}" >/dev/null
+
+monitor_file="$HOME/.config/hypr/friend/monitor.lua"
+if [[ -f "$monitor_file" ]]; then
+  sed -i -E "s/^[[:space:]]*scale = .*/    scale = ${scale},/" "$monitor_file"
+fi
+
+notify-send -u low "Display scale: ${scale}×" 2>/dev/null || true
+printf 'display scale: %s×\n' "$scale"

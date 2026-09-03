@@ -1,0 +1,88 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 30,
+  "spacing": 0,
+  "margin-top": 8,
+  "margin-left": 8,
+  "margin-right": 8,
+  "reload_style_on_change": true,
+  "modules-left": ["custom/menu", "hyprland/workspaces", "hyprland/window"],
+  "modules-center": ["clock"],
+  "modules-right": ["tray", "network", "bluetooth", "pulseaudio", "backlight", "battery"],
+
+  "custom/menu": {
+    "format": " 󰣇 ",
+    "tooltip": false,
+    "on-click": "fuzzel"
+  },
+  "hyprland/workspaces": {
+    "on-click": "activate",
+    "format": "{icon}",
+    "format-icons": {
+      "default": "",
+      "active": "󱓻",
+      "urgent": "󰀦"
+    },
+    "persistent-workspaces": {
+      "1": [], "2": [], "3": [], "4": [], "5": []
+    }
+  },
+  "hyprland/window": {
+    "format": "{}",
+    "max-length": 60,
+    "separate-outputs": true
+  },
+  "clock": {
+    "format": "{:%H:%M}",
+    "format-alt": "{:%A · %d %B %Y}",
+    "tooltip-format": "<tt>{calendar}</tt>",
+    "calendar": { "mode": "month", "weeks-pos": "right" }
+  },
+  "tray": {
+    "icon-size": 14,
+    "spacing": 10
+  },
+  "network": {
+    "format-wifi": "{icon}",
+    "format-ethernet": "󰈀",
+    "format-disconnected": "󰤮",
+    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+    "tooltip-format-wifi": "{essid} · {signalStrength}%\n{ipaddr}",
+    "tooltip-format-ethernet": "{ifname}\n{ipaddr}",
+    "on-click": "nm-connection-editor"
+  },
+  "bluetooth": {
+    "format": "",
+    "format-disabled": "󰂲",
+    "format-connected": " {num_connections}",
+    "tooltip-format": "{controller_alias}\n{device_enumerate}",
+    "tooltip-format-enumerate-connected": "{device_alias}",
+    "on-click": "blueman-manager"
+  },
+  "pulseaudio": {
+    "format": "{icon}",
+    "format-muted": "",
+    "format-icons": { "headphone": "", "default": ["", "", ""] },
+    "tooltip-format": "{desc} · {volume}%",
+    "scroll-step": 5,
+    "on-click": "pavucontrol",
+    "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+  },
+  "backlight": {
+    "format": "{icon}",
+    "format-icons": ["󰃞", "󰃟", "󰃠"],
+    "tooltip-format": "Brightness {percent}%",
+    "on-scroll-up": "brightnessctl set 5%+",
+    "on-scroll-down": "brightnessctl set 5%-"
+  },
+  "battery": {
+    "states": { "warning": 30, "critical": 15 },
+    "format": "{icon} {capacity}%",
+    "format-charging": "󰂄 {capacity}%",
+    "format-plugged": "󰚥 {capacity}%",
+    "format-icons": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+    "tooltip-format": "{timeTo} · {power} W"
+  }
+}
+

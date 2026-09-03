@@ -1,0 +1,24 @@
+
+    // Portable command bridge used by q-dnd and q-notif.
+    IpcHandler {
+        target: "notifications"
+        function dnd(mode: string): void {
+            if (mode === "on") notifSvc.dnd = true
+            else if (mode === "off") notifSvc.dnd = false
+            else notifSvc.dnd = !notifSvc.dnd
+        }
+        function dismiss(): void {
+            notifSvc.dismissCurrent()
+            notifSvc.clearLow()
+        }
+        function clear(): void {
+            if (notifSvc.current) notifSvc.current.dismiss()
+            for (let i = 0; i < notifSvc.fullQueue.length; ++i)
+                notifSvc.fullQueue[i].dismiss()
+            notifSvc.current = null
+            notifSvc.fullQueue = []
+            notifSvc.queuedCount = 0
+            notifSvc.clearLow()
+            notifSvc.clearHistory()
+        }
+    }

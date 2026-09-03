@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# q-sysinfo — one-line system summary.
+set -u
+
+BAT="${BATTERY_DEVICE:-$(find /sys/class/power_supply -maxdepth 1 -type l -name 'BAT*' | head -1)}"
+[[ -n "$BAT" ]] || { echo "battery not found" >&2; exit 1; }
+
+bat="bat $(cat "$BAT/capacity")%$( [ "$(cat "$BAT/status")" = "Charging" ] && echo '+' )"
+# power is negative while discharging → show magnitude with direction
+cur=$(cat "$BAT/power_now" 2>/dev/null || echo 0)
+draw=$(awk -v p="${cur#-}" 'BEGIN{printf "%.1fW", p/1000000}')
+load=$(cut -d' ' -f1-3 /proc/loadavg)
+mem=$(free -h --si | awk '/^Mem:/ {printf "%s/%s", $3, $2}')
+up=$(uptime -p | sed 's/up //')
+temp_raw=$(find /sys/class/thermal/thermal_zone* -name temp -readable -print -quit 2>/dev/null)
+if [[ -n "$temp_raw" ]]; then temp=$(( $(cat "$temp_raw") / 1000 ))°C; else temp="n/a"; fi
+
+echo "$bat $draw $temp · load $load · mem $mem · up $up"

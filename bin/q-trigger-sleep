@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# trigger-sleep — lock the session and suspend.
+# hypridle's before_sleep_cmd also locks, but we lock explicitly so this
+# stays correct even if hypridle is down.
+set -u
+friend-shell ipc call lock lock >/dev/null 2>&1 &
+sleep 0.5
+exec systemctl suspend

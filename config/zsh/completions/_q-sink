@@ -1,0 +1,8 @@
+#compdef q-sink
+
+local -a sinks
+while IFS=$'\t' read -r name entry; do
+    sinks+=("$entry")
+done < <(pactl list sinks short 2>/dev/null | awk '{print $2"\t"$NF}')
+
+_describe -t sinks 'audio output' sinks

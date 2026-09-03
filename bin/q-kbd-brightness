@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# q-kbd-brightness — keyboard backlight control.
+#
+# Usage:
+#   kbd-brightness          cycle: off → low → high → off
+#   kbd-brightness up       one step brighter (wraps to off at max)
+#   kbd-brightness down     one step dimmer
+#   kbd-brightness on       restore last non-zero level (saved in state file)
+#   kbd-brightness off      off
+#   kbd-brightness N        set an absolute hardware level
+set -u
+
+DEV="${KBD_BACKLIGHT_DEVICE:-$(find /sys/class/leds -mindepth 1 -maxdepth 1 -name '*::kbd_backlight' -printf '%f\n' | head -1)}"
+[[ -n "$DEV" ]] || { echo "keyboard backlight not found" >&2; exit 1; }
+STATE="$HOME/.cache/kbd-backlight-level"
+MAX="$(brightnessctl -d "$DEV" max)"
+STEPS=(0 $((MAX / 4)) "$MAX")
+
+cur() { brightnessctl -d "$DEV" get; }
+set_level() {
+    brightnessctl -d "$DEV" -q set "$1" >/dev/null || exit 1
+    [ "$1" -gt 0 ] && echo "$1" > "$STATE" 2>/dev/null
+    echo "kbd backlight: $1/$MAX"
+}
+
+case "${1:-cycle}" in
+    up)
+        cur_l=$(cur); next=""
+        for s in "${STEPS[@]}"; do [ "$s" -gt "$cur_l" ] && { next=$s; break; }; done
+        [ -z "$next" ] && next=${STEPS[0]}   # wrap around at max → off
+        set_level "$next"
+        ;;
+    down)
+        cur_l=$(cur); next=""
+        for ((i=${#STEPS[@]}-1; i>=0; i--)); do
+            [ "${STEPS[$i]}" -lt "$cur_l" ] && { next=${STEPS[$i]}; break; }
+        done
+        [ -z "$next" ] && next=${STEPS[${#STEPS[@]}-1]}
+        set_level "$next"
+        ;;
+    on)
+        if [ -f "$STATE" ]; then last=$(cat "$STATE"); else last=64; fi
+        set_level "$last"
+        ;;
+    off) set_level 0 ;;
+    cycle)
+        case "$(cur)" in
+            0) set_level ${STEPS[1]} ;;
+            *) set_level 0 ;;
+        esac
+        ;;
+    ''|*[!0-9]*)
+        echo "usage: q-kbd-brightness [up|down|on|off|cycle|0-$MAX]" >&2; exit 1 ;;
+    *) set_level "$1" ;;
+esac

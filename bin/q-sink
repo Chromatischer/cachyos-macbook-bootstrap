@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# q-sink — pick the default audio output.
+# Interactive: fuzzel picker. With arg: fuzzy match by name.
+set -u
+
+sinks() { pactl list sinks short | awk '{print $2"\t"$NF}'; }
+
+pick() {
+    sinks | fuzzel --dmenu --prompt "sink: " | cut -f1
+}
+
+case "${1:-}" in
+    "")  name=$(pick) ;;
+    *)   name=$(sinks | grep -i -- "$*" | head -1 | cut -f1) ;;
+esac
+
+[ -n "${name:-}" ] || { echo "no sink selected" >&2; exit 1; }
+pactl set-default-sink "$name"
+desc=$(pactl list sinks | grep -A2 "Name: $name" | grep -oP '(?<=Description: ).*')
+echo "output → $desc ($name)"

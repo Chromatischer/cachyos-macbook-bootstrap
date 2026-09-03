@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# q-reload-rice — reload the whole desktop stack in one go.
+set -u
+
+echo "· hyprland config"
+hyprctl reload >/dev/null
+
+echo "· quickshell (redesign)"
+friend-shell kill 2>/dev/null
+sleep 0.5
+nohup friend-shell -d >/dev/null 2>&1 &
+
+sleep 1.5
+if friend-shell list --all 2>/dev/null | grep -q redesign; then
+    echo "rice reloaded ✓"
+else
+    echo "warning: quickshell did not come back up — run 'qs-restart'" >&2
+    exit 1
+fi

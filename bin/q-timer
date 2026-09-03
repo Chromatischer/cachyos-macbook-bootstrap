@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# q-timer — countdown that notifies you when it expires.
+#
+# Usage:
+#   q-timer 10m              timer with no label
+#   q-timer 90s pasta        labelled timer
+#   q-timer 1h30m laundry    combined units work
+#   q-timer list             show running timers
+#   q-timer cancel [id]      cancel one (or all)
+set -u
+
+DIR="/tmp/q-timers"
+mkdir -p "$DIR"
+
+to_seconds() {
+    local total=0 num="" c
+    [[ "$1" =~ ^([0-9]+[smh]+)+$ ]] || return 1
+    for ((i=0; i<${#1}; i++)); do
+        c=${1:i:1}
+        if [[ "$c" =~ [0-9] ]]; then num+=$c; continue; fi
+        case "$c" in
+            s) total=$((total + num));;
+            m) total=$((total + num*60));;
+            h) total=$((total + num*3600));;
+        esac
+        num=""
+    done
+    echo "$total"
+}
+
+case "${1:-}" in
+    list)
+        for f in "$DIR"/*; do
+            [ -f "$f" ] || continue
+            pid=$(cat "$f")
+            kill -0 "$pid" 2>/dev/null || { rm -f "$f"; continue; }
+            left=$(( $(stat -c %Y "$f") + $(sed 's/.*\t//' "$f" | cut -f1) - $(date +%s) ))
+            echo "#${f##*/}  ${left}s left  (${f##*/}	$(cut -f2 "$f"))"
+        done
+        ;;
+    cancel)
+        if [ -n "${2:-}" ]; then
+            f="$DIR/$2"
+            [ -f "$f" ] && kill "$(cat "$f")" 2>/dev/null && rm -f "$f" && echo "timer $2 cancelled"
+        else
+            pkill -f "q-timer run-" 2>/dev/null; rm -f "$DIR"/*
+            echo "all timers cancelled"
+        fi
+        ;;
+    ""|--help|-h)
+        echo "usage: q-timer <90s|10m|1h|1h30m> [label] | list | cancel [id]" >&2
+        exit 1
+        ;;
+    *)
+        secs=$(to_seconds "$1") || { echo "bad duration: $1 (use 90s / 10m / 1h30m)" >&2; exit 1; }
+        label="${*:2}"
+        id="$(date +%s)"
+        (
+            sleep "$secs"
+            notify-send "Timer" "${label:-time is up} (${1})" -u critical
+            rm -f "$DIR/$id"
+        ) &
+        echo $! > "$DIR/$id"
+        printf '%s\t%s\n' "$secs" "$label" >> "$DIR/$id"
+        echo "timer #$id started: ${1}${label:+ ($label)}"
+        ;;
+esac

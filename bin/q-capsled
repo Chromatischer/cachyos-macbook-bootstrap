@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# q-capsled — direct control of the capslock LED.
+#
+# Usage:
+#   q-capsled            toggle
+#   q-capsled on|1       light up
+#   q-capsled off|0      off
+#   q-capsled status     print 0/1
+#   q-capsled hold       on + keep re-asserting (survives typing)
+#   q-capsled release    stop the hold loop
+#
+# Note: Hyprland resets keyboard LEDs to the logical capslock state on every
+# keypress, and this keyboard maps caps to compose (compose:caps) — so the
+# LED always gets forced back off while you type. 'hold' fights that; plain
+# 'on' is only reliable while your hands are off the keyboard.
+set -u
+
+DEV="${CAPS_LED_DEVICE:-$(find /sys/class/leds -mindepth 1 -maxdepth 1 -name '*::capslock' -printf '%f\n' | head -1)}"
+[[ -n "$DEV" ]] || { echo "capslock LED not found" >&2; exit 1; }
+
+cur() { brightnessctl -d "$DEV" get; }
+set_led() { brightnessctl -d "$DEV" -q set "$1" && echo "capslock led: $([ "$1" = "1" ] && echo on || echo off)"; }
+
+case "${1:-toggle}" in
+    toggle)
+        [ "$(cur)" = "0" ] && set_led 1 || set_led 0
+        ;;
+    hold)
+        q-capsled release >/dev/null 2>&1
+        set_led 1
+        (
+            trap 'brightnessctl -d "$DEV" -q set 0; exit' TERM INT
+            while true; do
+                brightnessctl -d "$DEV" -q set 1
+                sleep 0.5
+            done
+        ) &
+        echo $! > /tmp/q-capsled-hold.pid
+        disown
+        echo "holding (q-capsled release to stop)"
+        ;;
+    release)
+        if [ -f /tmp/q-capsled-hold.pid ]; then
+            kill "$(cat /tmp/q-capsled-hold.pid)" 2>/dev/null
+            rm -f /tmp/q-capsled-hold.pid
+        fi
+        led_off=0; brightnessctl -d "$DEV" -q set 0
+        echo "capslock led: released"
+        ;;
+    on|1)   set_led 1 ;;
+    off|0)  set_led 0 ;;
+    status) cur ;;
+    *)
+        echo "usage: q-capsled [on|off|toggle|hold|release|status]" >&2
+        exit 1
+        ;;
+esac

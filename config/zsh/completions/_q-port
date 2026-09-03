@@ -1,0 +1,9 @@
+#compdef q-port
+
+if (( CURRENT == 2 )); then
+    local -a ports
+    ports=($(ss -ltnH 2>/dev/null | awk '{print $4}' | grep -oP '(?<=:)[0-9]+$' | sort -un))
+    _describe -t ports 'listening port' ports
+elif (( CURRENT == 3 )); then
+    _values 'action' kill
+fi

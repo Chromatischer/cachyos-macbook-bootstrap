@@ -1,0 +1,9 @@
+# Useful applications, intentionally not installed by default.
+keepassxc
+krita
+libreoffice-fresh
+mpv
+nextcloud-client
+signal-desktop
+vlc
+

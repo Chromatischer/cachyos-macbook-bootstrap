@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# q-idle-toggle — suspend/resume idle handling (hypridle) temporarily.
+# Useful for presentations, long downloads, watching stuff.
+set -u
+
+if pgrep -x hypridle >/dev/null; then
+    pkill -x hypridle
+    echo "idle handling OFF (screen won't blank, won't suspend)"
+    echo "run q-idle-toggle again to re-enable"
+else
+    nohup hypridle >/dev/null 2>&1 &
+    sleep 0.5
+    pgrep -x hypridle >/dev/null \
+        && echo "idle handling ON" \
+        || { echo "failed to start hypridle" >&2; exit 1; }
+fi

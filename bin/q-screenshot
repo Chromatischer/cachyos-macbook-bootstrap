@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# q-screenshot — take a screenshot, save it and copy it to the clipboard.
+#
+# Usage:
+#   screenshot          region select (slurp)
+#   screenshot full     full screen
+#   screenshot win      focused window geometry
+set -u
+
+DIR="$HOME/Pictures/Screenshots"
+mkdir -p "$DIR"
+FILE="$DIR/screenshot-$(date +%Y-%m-%d_%H-%M-%S).png"
+
+case "${1:-region}" in
+    region)
+        geom=$(slurp) || exit 1
+        grim -g "$geom" "$FILE"
+        ;;
+    full)
+        grim "$FILE"
+        ;;
+    win)
+        geom=$(hyprctl activewindow -j | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')
+        grim -g "$geom" "$FILE"
+        ;;
+    *) echo "usage: q-screenshot [region|full|win]" >&2; exit 1 ;;
+esac
+
+wl-copy < "$FILE"
+notify-send "Screenshot" "saved + copied: $(basename "$FILE")" -i "$FILE" 2>/dev/null || true
+echo "$FILE"

@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# q-update — pull/apply the shared config, update CachyOS, or publish reviewed changes.
+set -Eeuo pipefail
+
+repo="${Q_CONFIG_REPO_DIR:-$HOME/cachyos-macbook-bootstrap}"
+
+usage() {
+  cat <<'EOF'
+Usage: q-update [all|config|system|publish] [arguments]
+
+  q-update              Pull/apply config, then update the system
+  q-update config       Pull and apply the shared config only
+  q-update system [...] Update packages only (arguments pass to the helper)
+  q-update publish [...] Capture allow-listed files, verify, commit, and push
+
+Set Q_CONFIG_REPO_DIR if the repository is not ~/cachyos-macbook-bootstrap.
+EOF
+}
+
+need_repo() {
+  [[ -d "$repo/.git" ]] || {
+    printf 'Config repository not found at %s\n' "$repo" >&2
+    printf 'Clone it with:\n  git clone https://github.com/Chromatischer/cachyos-macbook-bootstrap.git %q\n' "$repo" >&2
+    exit 1
+  }
+}
+
+update_config() {
+  need_repo
+  if ! git -C "$repo" diff --quiet || ! git -C "$repo" diff --cached --quiet; then
+    printf 'Local repository changes found; refusing to overwrite them.\n' >&2
+    printf 'Run q-update publish, commit them manually, or restore them first.\n' >&2
+    exit 1
+  fi
+  printf '%s\n' '── config sync ──'
+  git -C "$repo" pull --ff-only
+  "$repo/sync-config.sh"
+}
+
+update_system() {
+  printf '%s\n' '── system update ──'
+  if command -v paru >/dev/null 2>&1; then
+    paru "$@"
+  elif command -v yay >/dev/null 2>&1; then
+    yay "$@"
+  else
+    sudo pacman -Syu "$@"
+  fi
+
+  local -a orphans=()
+  mapfile -t orphans < <(pacman -Qtdq 2>/dev/null || true)
+  if ((${#orphans[@]})); then
+    printf '\n── %d orphan packages ──\n' "${#orphans[@]}"
+    printf '%s\n' "${orphans[@]:0:20}"
+    read -r -p 'remove orphans? [y/N] ' reply
+    [[ ${reply:-} == [yY]* ]] && sudo pacman -Rns -- "${orphans[@]}"
+  fi
+}
+
+publish_config() {
+  need_repo
+  "$repo/scripts/capture-config.sh"
+  "$repo/scripts/verify.sh"
+  git -C "$repo" status --short
+  if git -C "$repo" diff --quiet && git -C "$repo" diff --cached --quiet; then
+    printf '%s\n' 'Nothing changed.'
+    return
+  fi
+  printf '\nReview the change summary and full diff below:\n'
+  git -C "$repo" diff --stat
+  git -C "$repo" diff
+  read -r -p 'Publish these reviewed changes? [y/N] ' reply
+  [[ ${reply:-} == [yY]* ]] || { printf '%s\n' 'Not published.'; return; }
+  local message="${*:-config: sync from $(hostname)}"
+  git -C "$repo" add --all
+  git -C "$repo" commit -m "$message"
+  git -C "$repo" push
+}
+
+command_name="${1:-all}"
+[[ $# -eq 0 ]] || shift
+case "$command_name" in
+  all) update_config; update_system "$@" ;;
+  config) update_config ;;
+  system) update_system "$@" ;;
+  publish) publish_config "$@" ;;
+  help|-h|--help) usage ;;
+  *) printf 'Unknown q-update command: %s\n\n' "$command_name" >&2; usage >&2; exit 2 ;;
+esac
+
+printf '%s\n' 'done ✓'

@@ -1,0 +1,12 @@
+#compdef q-capsled q-battery-saver q-kbd-brightness
+
+local -a cmds
+case "$service" in
+    q-capsled)         cmds=(on off toggle hold release status) ;;
+    q-battery-saver)   cmds=(on off toggle status) ;;
+    q-kbd-brightness)  cmds=(up down on off cycle) ;;
+esac
+
+_alternative \
+    "commands:command:($cmds)" \
+    'values:value:(0 64 128 255)'

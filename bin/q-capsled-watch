@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# q-capsled-watch — pipe indicator: capslock LED lights while data flows.
+#
+# Usage:
+#   long-running-task | q-capsled-watch
+#
+# LED goes ON immediately, OFF when stdin closes or you interrupt.
+# Re-asserts ~2x/sec because Hyprland resets keyboard LEDs to the logical
+# capslock state on every keypress (caps is remapped to compose here).
+set -u
+
+DEV="${CAPS_LED_DEVICE:-$(find /sys/class/leds -mindepth 1 -maxdepth 1 -name '*::capslock' -printf '%f\n' | head -1)}"
+[[ -n "$DEV" ]] || { echo "capslock LED not found" >&2; exit 1; }
+
+led() { brightnessctl -d "$DEV" -q set "$1"; }
+
+cleanup() {
+    led 0
+}
+trap cleanup EXIT INT TERM
+
+# consume stdin in the background so we can keep the LED alive meanwhile
+cat >/dev/null &
+reader=$!
+
+while kill -0 "$reader" 2>/dev/null; do
+    led 1
+    sleep 0.5
+done
