@@ -75,3 +75,19 @@ hl.bind("SHIFT + XF86MonBrightnessDown", hl.dsp.exec_cmd("q-kbd-brightness down"
 hl.bind("XF86KbdBrightnessUp", hl.dsp.exec_cmd("q-kbd-brightness up"), { locked = true, repeating = true })
 hl.bind("XF86KbdBrightnessDown", hl.dsp.exec_cmd("q-kbd-brightness down"), { locked = true, repeating = true })
 hl.bind("XF86KbdLightOnOff", hl.dsp.exec_cmd("q-kbd-brightness cycle"), { locked = true })
+
+-- Touch Bar Spaces. Raw XKB keycodes 191-200 correspond to F13-F22.
+for i = 1, 10 do
+    hl.bind("code:" .. (190 + i), hl.dsp.focus({ workspace = i }))
+end
+
+-- Utilities on the Touch Bar's Fn layer. Raw XKB keycodes avoid layout-specific
+-- remapping of F23/F24 and the two programmable keys.
+hl.bind("code:201", hl.dsp.exec_cmd("~/.local/bin/friend-shell ipc call launcher toggle"))
+hl.bind("code:202", hl.dsp.exec_cmd(launch .. "thunar"))
+hl.bind("code:156", hl.dsp.exec_cmd("grim -g \"$(slurp)\" - | satty --filename -"))
+hl.bind("code:157", hl.dsp.exec_cmd("~/.local/bin/friend-shell ipc call lock lock"), { locked = true })
+
+-- Relative seek events emitted while dragging the now-playing slider.
+hl.bind("code:210", hl.dsp.exec_cmd("playerctl position 5-"), { locked = true, repeating = true })
+hl.bind("code:211", hl.dsp.exec_cmd("playerctl position 5+"), { locked = true, repeating = true })
