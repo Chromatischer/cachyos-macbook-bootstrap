@@ -40,6 +40,8 @@ while IFS= read -r -d '' source; do
   copy_file "$source" "$HOME/.local/bin/${source##*/}" 0755
 done < <(find "$root/bin" -maxdepth 1 -type f -print0 | sort -z)
 
+copy_file "$root/home/.zshrc" "$HOME/.zshrc" 0644
+
 if [[ -d "$root/codex/home" ]]; then
   while IFS= read -r -d '' source; do
     relative="${source#"$root/codex/home/"}"

@@ -39,6 +39,10 @@ while IFS= read -r -d '' tracked; do
   [[ -f "$source" ]] && install -Dm0755 -- "$source" "$tracked"
 done < <(find "$root/bin" -maxdepth 1 -type f -print0 | sort -z)
 
+if [[ -f "$HOME/.zshrc" ]]; then
+  install -Dm0644 -- "$HOME/.zshrc" "$root/home/.zshrc"
+fi
+
 printf '%s\n' 'Captured allow-listed config. Running privacy check...'
 "$root/scripts/privacy-check.sh"
-printf '%s\n' 'Capture complete. Machine-specific input/monitor and all account state were skipped.'
+printf '%s\n' 'Capture complete. Machine-specific input/monitor, .zshrc.local, and all account state were skipped.'

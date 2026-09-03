@@ -1,7 +1,14 @@
 # Optional AUR applications. Programs are installed; account profiles are never copied.
+aether
+bun-bin
+ccusage
+ccusage-statusline-rs
 claude-code
+fconvert
 opencode-bin
+python-pdfplumber
+python-tree-sitter
 typora
 vesktop
+xdg-terminal-exec
 zen-browser-bin
-

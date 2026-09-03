@@ -171,8 +171,17 @@ install_aur_packages() {
   if command -v paru >/dev/null; then helper=paru
   elif command -v yay >/dev/null; then helper=yay
   else
-    warn 'No AUR helper found; optional AUR applications were skipped.'
-    return
+    if ((DRY_RUN)); then
+      info 'Would build yay from its reviewed AUR PKGBUILD before installing AUR apps.'
+      helper=yay
+    else
+      local yay_build
+      yay_build="$(mktemp -d)"
+      info 'No AUR helper found; bootstrapping yay as the target user.'
+      git clone --depth 1 https://aur.archlinux.org/yay.git "$yay_build/yay"
+      (cd "$yay_build/yay" && makepkg -si --needed --noconfirm)
+      helper=yay
+    fi
   fi
 
   local -a packages=()

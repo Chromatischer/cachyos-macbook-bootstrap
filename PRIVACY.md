@@ -51,3 +51,7 @@ often live beside one another.
 `q-update publish` uses `scripts/capture-config.sh`, which captures only named
 portable files and already-tracked `q-*` helpers, then runs the privacy check
 before offering to commit and push.
+
+The shared `.zshrc` loads `~/.zshrc.local` when present. Put host names,
+account-specific paths, private aliases, tokens, and other per-machine shell
+settings there; the local file is never captured or deployed.
