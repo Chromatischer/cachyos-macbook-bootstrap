@@ -271,6 +271,7 @@ install_quickshell_rice() {
 
   local settings="$target/services/Settings.qml"
   local shell="$target/shell.qml"
+  local launcher="$target/ui/Launcher.qml"
   local ipc_part="$ROOT_DIR/system/quickshell-notifications-ipc.qmlpart"
   if ((DRY_RUN)); then
     info 'Would apply the portable brightness and notification command bridges.'
@@ -285,6 +286,13 @@ install_quickshell_rice() {
   if [[ -f "$shell" && -f "$ipc_part" ]] && ! grep -q 'target: "notifications"' "$shell"; then
     backup_target "$shell"
     sed -i "/Notifications { id: notifSvc }/r $ipc_part" "$shell"
+  fi
+  if [[ -f "$launcher" ]]; then
+    backup_target "$launcher"
+    sed -i \
+      -e 's|cmd: \["omarchy-launch-screensaver", "force"\]|cmd: [home + "/.local/bin/lock-screen"]|' \
+      -e 's|home + "/.config/scripts/random-wallpaper.sh"|home + "/.local/bin/random-wallpaper"|' \
+      "$launcher"
   fi
 }
 

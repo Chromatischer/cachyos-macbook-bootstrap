@@ -48,6 +48,20 @@ if [[ -d "$root/codex/skills" ]]; then
   done < <(find "$root/codex/skills" -type f -print0 | sort -z)
 fi
 
+# Remove the two remaining Omarchy-only launcher calls from the shared rice.
+launcher="$HOME/.config/quickshell/redesign/ui/Launcher.qml"
+if [[ -f "$launcher" ]]; then
+  if grep -qE 'omarchy-launch-screensaver|/\.config/scripts/random-wallpaper\.sh' "$launcher"; then
+    copy_file "$launcher" "$launcher" 0644
+    if ((dry_run == 0)); then
+      sed -i \
+        -e 's|cmd: \["omarchy-launch-screensaver", "force"\]|cmd: [home + "/.local/bin/lock-screen"]|' \
+        -e 's|home + "/.config/scripts/random-wallpaper.sh"|home + "/.local/bin/random-wallpaper"|' \
+        "$launcher"
+    fi
+  fi
+fi
+
 if ((dry_run)); then
   printf '%s\n' '[DRY] Config sync complete; no files changed.'
 else

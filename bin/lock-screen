@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+if command -v friend-shell >/dev/null 2>&1 && friend-shell ipc call lock lock; then
+  exit 0
+fi
+
+if command -v hyprlock >/dev/null 2>&1; then
+  exec hyprlock
+fi
+
+echo 'No supported screen locker is available.' >&2
+exit 1

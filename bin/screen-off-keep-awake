@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+command -v hyprctl >/dev/null 2>&1 || {
+  echo 'hyprctl is required to turn the displays off.' >&2
+  exit 1
+}
+
+# Hyprland turns the displays back on at the next input event. This command
+# deliberately does not suspend or lock the session.
+exec hyprctl dispatch dpms off
