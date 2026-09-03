@@ -10,18 +10,23 @@ dry_run=0
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 backup="${XDG_STATE_HOME:-$HOME/.local/state}/cachyos-macbook-bootstrap/config-backups/$stamp"
 
-copy_file() {
-  local source=$1 target=$2 relative
-  [[ -f "$source" ]] || return 0
-  if ((dry_run)); then
-    printf '[DRY] %s -> %s\n' "$source" "$target"
-    return
-  fi
+backup_file() {
+  local target=$1 relative
   if [[ -e "$target" || -L "$target" ]]; then
     relative="${target#/}"
     mkdir -p "$backup/$(dirname -- "$relative")"
     cp -a -- "$target" "$backup/$relative"
   fi
+}
+
+copy_file() {
+  local source=$1 target=$2
+  [[ -f "$source" ]] || return 0
+  if ((dry_run)); then
+    printf '[DRY] %s -> %s\n' "$source" "$target"
+    return
+  fi
+  backup_file "$target"
   install -Dm"$3" -- "$source" "$target"
 }
 
@@ -52,8 +57,10 @@ fi
 launcher="$HOME/.config/quickshell/redesign/ui/Launcher.qml"
 if [[ -f "$launcher" ]]; then
   if grep -qE 'omarchy-launch-screensaver|/\.config/scripts/random-wallpaper\.sh' "$launcher"; then
-    copy_file "$launcher" "$launcher" 0644
-    if ((dry_run == 0)); then
+    if ((dry_run)); then
+      printf '[DRY] patch portable launcher commands in %s\n' "$launcher"
+    else
+      backup_file "$launcher"
       sed -i \
         -e 's|cmd: \["omarchy-launch-screensaver", "force"\]|cmd: [home + "/.local/bin/lock-screen"]|' \
         -e 's|home + "/.config/scripts/random-wallpaper.sh"|home + "/.local/bin/random-wallpaper"|' \
