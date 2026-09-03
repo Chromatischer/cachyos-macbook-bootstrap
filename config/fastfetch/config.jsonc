@@ -15,13 +15,12 @@
     { "type": "kernel", "key": " Kernel", "keyColor": "blue" },
     { "type": "wm", "key": " WM", "keyColor": "blue" },
     { "type": "terminal", "key": " Terminal", "keyColor": "blue" },
-    { "type": "cpu", "key": " CPU", "keyColor": "mauve" },
-    { "type": "gpu", "key": "󰢮 GPU", "keyColor": "mauve" },
-    { "type": "memory", "key": " Memory", "keyColor": "mauve" },
-    { "type": "disk", "key": "󰋊 Disk", "keyColor": "mauve" },
+    { "type": "cpu", "key": " CPU", "keyColor": "magenta" },
+    { "type": "gpu", "key": "󰢮 GPU", "keyColor": "magenta" },
+    { "type": "memory", "key": " Memory", "keyColor": "magenta" },
+    { "type": "disk", "key": "󰋊 Disk", "keyColor": "magenta" },
     { "type": "battery", "key": "󰁹 Battery", "keyColor": "green" },
     { "type": "uptime", "key": "󱫐 Uptime", "keyColor": "green" },
     "break"
   ]
 }
-

@@ -63,10 +63,12 @@ alias ff='fzf --preview '\''bat --style=numbers --color=always {}'\'''
 
 if (( $+commands[eza] )); then
   alias ls='eza -lh --no-permissions --no-user --group-directories-first --icons=auto'
+  alias ll='eza -lah --group-directories-first --icons=auto --git'
   alias la='eza -lha --no-permissions --no-user --group-directories-first --icons=auto'
   alias lt='eza --tree --level=2 --long --icons --git --no-permissions --no-user'
 else
   alias ls='ls --color=auto'
+  alias ll='ls -lah'
   alias la='ls -la'
 fi
 (( $+commands[bat] )) && alias cat='bat --paging=never'
