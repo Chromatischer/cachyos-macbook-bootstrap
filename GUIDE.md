@@ -284,6 +284,21 @@ send the model identifier and relevant PCI/USB lines before installing
 proprietary camera firmware, fan daemons, or out-of-tree modules. A working
 temperature sensor must be confirmed before enabling a fan daemon.
 
+#### T2 lid and suspend safety
+
+On T2 machines, the bootstrap installs a logind policy that locks instead of
+suspending when the lid closes. The shared Hypridle config locks after five
+minutes and blanks the display after 5.5 minutes, but does not automatically
+suspend. This avoids a known failure mode where `apple_bce` crashes during
+resume and leaves the internal display and system unresponsive. The
+`q-trigger-sleep` helper also refuses hardware suspend when that driver is
+active. Reboot after the bootstrap installs the lid policy; until then, do not
+close the lid.
+
+This restriction is conditional: on a non-T2 Mac without `apple_bce`,
+`q-trigger-sleep` still performs a normal suspend. Re-test T2 suspend only after
+the model's upstream kernel issue is confirmed fixed.
+
 ## Codex and skills migration
 
 The bootstrap follows the current
@@ -342,7 +357,9 @@ repair. On T2 hardware, retaining macOS is part of the recovery strategy.
 - macOS boots and can still enter Recovery.
 - CachyOS boots through Limine and has a second known-good kernel.
 - Wi-Fi/Ethernet, audio, keyboard, trackpad, brightness, battery reporting,
-  suspend/resume, and external display output have each been tested.
+  lid close/open behavior, and external display output have each been tested.
+- Suspend/resume has been tested on non-T2 hardware; on affected T2 models,
+  lid-close safely locks instead of suspending.
 - Hyprland starts from UWSM; Quickshell, Fuzzel, lock, clipboard, and screenshots
   work.
 - `./scripts/verify.sh` passes before this repository is shared.

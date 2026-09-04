@@ -340,6 +340,8 @@ configure_system() {
   if [[ "$HAS_T2" == yes ]]; then
     run sudo install -Dm0644 "$ROOT_DIR/system/90-t2-backlight.rules" \
       /etc/udev/rules.d/90-t2-backlight.rules
+    run sudo install -Dm0644 "$ROOT_DIR/system/90-t2-lid.conf" \
+      /etc/systemd/logind.conf.d/90-t2-lid.conf
     run sudo install -Dm0644 "$ROOT_DIR/system/20-t2-hardware.conf" \
       /etc/limine-entry-tool.d/20-t2-hardware.conf
     run sudo udevadm control --reload-rules
@@ -348,6 +350,7 @@ configure_system() {
     if command -v limine-mkinitcpio >/dev/null 2>&1; then
       run sudo limine-mkinitcpio
     fi
+    warn 'T2 lid safety policy installed; reboot before closing the lid.'
   fi
 
   if enabled "$INSTALL_DEVELOPMENT" && getent group docker >/dev/null 2>&1; then

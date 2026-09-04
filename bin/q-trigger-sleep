@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
-# trigger-sleep — lock the session and suspend.
+# q-trigger-sleep — lock the session and suspend when the hardware supports it.
 # hypridle's before_sleep_cmd also locks, but we lock explicitly so this
 # stays correct even if hypridle is down.
-set -u
+set -Eeuo pipefail
 friend-shell ipc call lock lock >/dev/null 2>&1 &
 sleep 0.5
+
+if [[ -d /sys/module/apple_bce || -d /sys/bus/pci/drivers/apple-bce ]]; then
+    printf '%s\n' \
+        'Suspend blocked: apple_bce is active and this T2 Mac can crash on resume.' \
+        'The session has been locked. Use normal shutdown for transport.' >&2
+    exit 1
+fi
+
 exec systemctl suspend

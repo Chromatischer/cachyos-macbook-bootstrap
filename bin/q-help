@@ -60,7 +60,8 @@ show_usage() {
     q-sink) echo 'Usage: q-sink' ;;
     q-sysinfo) echo 'Usage: q-sysinfo' ;;
     q-timer) echo 'Usage: q-timer <90s|10m|1h|1h30m> [label] | list | cancel [ID]' ;;
-    q-trigger-sleep) echo 'Usage: q-trigger-sleep' ;;
+    q-trigger-sleep) printf '%s\n' 'Usage: q-trigger-sleep' \
+      '  Locks, then suspends. On T2 Macs with apple_bce it locks but blocks unsafe suspend.' ;;
     q-update) printf '%s\n' 'Usage: q-update [all|config|system|publish] [arguments]' \
       '  config   pull and apply shared configuration' \
       '  system   update repository and AUR packages' \
