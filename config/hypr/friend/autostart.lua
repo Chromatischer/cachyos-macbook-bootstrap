@@ -1,7 +1,7 @@
 hl.on("hyprland.start", function()
     hl.exec_cmd("dbus-update-activation-environment --systemd --all")
     hl.exec_cmd("pgrep -x qs >/dev/null || ~/.local/bin/friend-shell")
-    hl.exec_cmd("pgrep -x hyprpaper >/dev/null || ~/.local/bin/friend-wallpaper")
+    hl.exec_cmd("(pgrep -x swaybg || pgrep -x hyprpaper) >/dev/null || ~/.local/bin/friend-wallpaper")
     hl.exec_cmd("pgrep -x nm-applet >/dev/null || uwsm app -- nm-applet --indicator")
     hl.exec_cmd("pgrep -x blueman-applet >/dev/null || uwsm app -- blueman-applet")
     hl.exec_cmd("pgrep -f polkit-gnome-authentication-agent-1 >/dev/null || /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1")
