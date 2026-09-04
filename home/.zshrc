@@ -16,8 +16,7 @@ unsetopt beep
 bindkey -v
 
 fpath=("$HOME/.config/zsh/completions" $fpath)
-autoload -Uz compinit colors
-compinit
+autoload -Uz colors
 colors
 
 # Keep the useful interactive pieces from the source setup. Zinit is installed
@@ -30,12 +29,11 @@ if [[ ! -r "$ZINIT_HOME/zinit.zsh" ]] && (( $+commands[git] )); then
 fi
 if [[ -r "$ZINIT_HOME/zinit.zsh" ]]; then
   source "$ZINIT_HOME/zinit.zsh"
-  zinit ice wait'1' lucid
-  zinit light zdharma-continuum/fast-syntax-highlighting
-  zinit ice wait'1' lucid
-  zinit light zsh-users/zsh-autosuggestions
-  zinit ice wait'1' lucid
+  # Autocomplete initializes Zsh completion itself and must be loaded
+  # synchronously, before plugins that add or wrap line-editor widgets.
   zinit light marlonrichert/zsh-autocomplete
+  zinit light zsh-users/zsh-autosuggestions
+  zinit light zdharma-continuum/fast-syntax-highlighting
   bindkey '^ ' autosuggest-accept
 fi
 
