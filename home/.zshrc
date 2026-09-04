@@ -29,11 +29,11 @@ if [[ ! -r "$ZINIT_HOME/zinit.zsh" ]] && (( $+commands[git] )); then
 fi
 if [[ -r "$ZINIT_HOME/zinit.zsh" ]]; then
   source "$ZINIT_HOME/zinit.zsh"
-  # Autocomplete initializes Zsh completion itself and must be loaded
-  # synchronously, before plugins that add or wrap line-editor widgets.
+  # Load the line editor stack synchronously in compatibility order. Autocomplete
+  # initializes Zsh completion itself, so do not call compinit separately.
+  zinit light zdharma-continuum/fast-syntax-highlighting
   zinit light marlonrichert/zsh-autocomplete
   zinit light zsh-users/zsh-autosuggestions
-  zinit light zdharma-continuum/fast-syntax-highlighting
   bindkey '^ ' autosuggest-accept
 fi
 
