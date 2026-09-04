@@ -8,6 +8,7 @@ fconvert
 opencode-bin
 python-pdfplumber
 python-tree-sitter
+spotify
 typora
 vesktop
 xdg-terminal-exec

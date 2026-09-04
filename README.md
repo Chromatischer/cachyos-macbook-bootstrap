@@ -32,6 +32,7 @@ q-update                        # do both
 q-update publish "config: note" # capture, review, commit, and push
 q-help                         # list every q-* helper
 q-help brightness              # show usage for one helper
+theme-apply nocturne           # apply one of the shared rice palettes
 ```
 
 `publish` copies only an explicit allow-list. It deliberately skips monitor and

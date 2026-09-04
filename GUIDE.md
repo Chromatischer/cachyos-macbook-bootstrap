@@ -180,11 +180,11 @@ $EDITOR profile.env
 ```
 
 Set `MAC_MODEL` and `HAS_T2` from the macOS report. Set `KEYBOARD_LAYOUT` to
-the keyboard's XKB layout (`us`, `de`, or `gb`, for example). Leave optional
-AUR apps off for the first pass; they increase build time and make failures
-noisier. The default run performs a full package upgrade, installs the
-desktop/development groups, deploys the rice, installs Codex from OpenAI's
-official installer, and enables NetworkManager/Bluetooth. Every replaced
+the keyboard's XKB layout (`us`, `de`, or `gb`, for example). Optional desktop
+and AUR applications are enabled by default; set either app flag to `0` for a
+shorter first pass. The default run performs a full package upgrade, installs
+the desktop/development/application groups, deploys the rice, installs Codex
+from OpenAI's official installer, and enables NetworkManager/Bluetooth. Every replaced
 config is copied to:
 
 ```text

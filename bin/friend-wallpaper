@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-wallpaper="${FRIEND_WALLPAPER:-$HOME/Pictures/Wallpapers/default.jpg}"
+wallpaper="${FRIEND_WALLPAPER:-$HOME/Pictures/Wallpapers/current}"
+[[ -f "$wallpaper" ]] || wallpaper="$HOME/Pictures/Wallpapers/default.jpg"
 
 pkill -x swaybg 2>/dev/null || true
 if [[ -f "$wallpaper" ]]; then
@@ -9,4 +10,3 @@ if [[ -f "$wallpaper" ]]; then
 else
   exec swaybg -c '#1e1e2e'
 fi
-

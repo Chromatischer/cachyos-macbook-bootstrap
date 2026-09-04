@@ -55,3 +55,7 @@ before offering to commit and push.
 The shared `.zshrc` loads `~/.zshrc.local` when present. Put host names,
 account-specific paths, private aliases, tokens, and other per-machine shell
 settings there; the local file is never captured or deployed.
+
+Wallpaper image collections are transferred separately and are not committed
+to this public repository. The reusable color-palette TOML files are synced;
+they contain no account or browser state.

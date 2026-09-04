@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# theme-apply — apply a portable rice palette without requiring Omarchy.
+set -Eeuo pipefail
+
+palette_dir="$HOME/.config/omarchy/themes"
+current_root="$HOME/.config/omarchy/current"
+current_theme="$current_root/theme"
+current_name="$current_root/theme.name"
+
+case "${1:-}" in
+  --current-theme)
+    [[ -s "$current_name" ]] && head -n 1 "$current_name" || printf 'unknown\n'
+    exit 0 ;;
+  --list-fastfetch|--current-fastfetch) exit 0 ;;
+  --fastfetch) printf 'Fastfetch presets are not managed here.\n' >&2; exit 1 ;;
+esac
+
+dry_run=0
+if [[ ${1:-} == --dry-run ]]; then dry_run=1; shift; fi
+name=${1:-}
+[[ $name =~ ^[A-Za-z0-9._-]+$ ]] || { echo 'Usage: theme-apply [--dry-run] <palette>' >&2; exit 2; }
+palette="$palette_dir/$name.toml"
+[[ -f "$palette" ]] || { printf 'Palette not found: %s\n' "$palette" >&2; exit 1; }
+
+required=(background foreground cursor selection_background selection_foreground accent)
+for index in {0..15}; do required+=("color$index"); done
+for key in "${required[@]}"; do
+  grep -Eq "^[[:space:]]*$key[[:space:]]*=[[:space:]]*\"#[0-9A-Fa-f]{6}\"" "$palette" || {
+    printf '%s is missing a valid %s color\n' "$name" "$key" >&2
+    exit 1
+  }
+done
+((dry_run)) && { printf 'valid palette: %s\n' "$name"; exit 0; }
+
+mkdir -p "$current_theme"
+tmp="$current_theme/colors.toml.tmp"
+cp -- "$palette" "$tmp"
+mv -- "$tmp" "$current_theme/colors.toml"
+printf '%s\n' "$name" >"$current_name.tmp"
+mv -- "$current_name.tmp" "$current_name"
+printf '%s\n' "$name" >"$HOME/.config/omarchy/current-theme.tmp"
+mv -- "$HOME/.config/omarchy/current-theme.tmp" "$HOME/.config/omarchy/current-theme"
+
+if command -v hyprctl >/dev/null 2>&1 && [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
+  hyprctl reload >/dev/null || true
+fi
+printf 'Applied palette: %s\n' "$name"

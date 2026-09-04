@@ -4,6 +4,6 @@ krita
 libreoffice-fresh
 mpv
 nextcloud-client
+obsidian
 signal-desktop
 vlc
-

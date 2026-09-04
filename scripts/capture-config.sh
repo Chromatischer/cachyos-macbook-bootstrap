@@ -18,6 +18,12 @@ config_paths=(
   hypr/friend/rules.lua
   kitty/kitty.conf
   mako/config
+  omarchy/themes/aubergine.toml
+  omarchy/themes/ember.toml
+  omarchy/themes/graphite.toml
+  omarchy/themes/moss.toml
+  omarchy/themes/nocturne.toml
+  omarchy/themes/sumi.toml
   rice/rice.txt
   starship.toml
   tmux/tmux.conf
@@ -34,7 +40,7 @@ done
 
 while IFS= read -r -d '' tracked; do
   name="${tracked##*/}"
-  [[ "$name" == q-update ]] && continue
+  [[ "$name" == q-update || "$name" == theme-apply ]] && continue
   source="$HOME/.local/bin/$name"
   [[ -f "$source" ]] && install -Dm0755 -- "$source" "$tracked"
 done < <(find "$root/bin" -maxdepth 1 -type f -print0 | sort -z)
