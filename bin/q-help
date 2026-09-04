@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# q-help — list the q-* helpers and explain how to use each one.
+set -Eeuo pipefail
+
+discover_commands() {
+  local directory path name
+  local -a path_dirs commands=()
+  declare -A seen=()
+
+  IFS=: read -r -a path_dirs <<<"$PATH"
+  shopt -s nullglob
+  for directory in "${path_dirs[@]}"; do
+    [[ -d "$directory" ]] || continue
+    for path in "$directory"/q-*; do
+      [[ -f "$path" && -x "$path" ]] || continue
+      name=${path##*/}
+      [[ ${seen[$name]+yes} ]] && continue
+      seen[$name]=1
+      commands+=("$name")
+    done
+  done
+  ((${#commands[@]})) && printf '%s\n' "${commands[@]}" | sort
+}
+
+description_for() {
+  local name=$1 path line
+  path=$(command -v -- "$name" 2>/dev/null) || return 1
+  line=$(sed -n '2{s/^#[[:space:]]*//;p;q;}' "$path")
+  line=${line#* — }
+  printf '%s' "${line:-installed q helper}"
+}
+
+show_overview() {
+  local name
+  printf '%s\n\n' 'q commands'
+  while IFS= read -r name; do
+    printf '  %-22s %s\n' "$name" "$(description_for "$name")"
+  done < <(discover_commands)
+  printf '\nUse q-help <name> for examples, such as: q-help brightness\n'
+}
+
+show_usage() {
+  local name=$1
+  case "$name" in
+    q-battery-saver) echo 'Usage: q-battery-saver [on|off|toggle|status]' ;;
+    q-brightness) echo 'Usage: q-brightness [status|get|up [N]|down [N]|set N]' ;;
+    q-capsled) echo 'Usage: q-capsled [on|off|toggle|hold|release|status]' ;;
+    q-capsled-watch) echo 'Usage: long-running-command | q-capsled-watch' ;;
+    q-dnd) echo 'Usage: q-dnd [on|off|toggle|status]' ;;
+    q-errors) echo 'Usage: q-errors [TIME] [-s]    Example: q-errors 24h -s' ;;
+    q-idle-toggle) echo 'Usage: q-idle-toggle' ;;
+    q-kbd-brightness) echo 'Usage: q-kbd-brightness [up|down|on|off|cycle|0-100]' ;;
+    q-mic-mute) echo 'Usage: q-mic-mute' ;;
+    q-notif) echo 'Usage: q-notif [list|history|pop|read|empty|dismiss|dnd]' ;;
+    q-port) echo 'Usage: q-port <PORT> [kill]    Example: q-port 3000' ;;
+    q-reload-rice) echo 'Usage: q-reload-rice' ;;
+    q-restart-bluetooth) echo 'Usage: q-restart-bluetooth' ;;
+    q-screenshot) echo 'Usage: q-screenshot [region|full|win]' ;;
+    q-shot) echo 'Usage: q-shot [region|full|--pick|WINDOW]' ;;
+    q-sink) echo 'Usage: q-sink' ;;
+    q-sysinfo) echo 'Usage: q-sysinfo' ;;
+    q-timer) echo 'Usage: q-timer <90s|10m|1h|1h30m> [label] | list | cancel [ID]' ;;
+    q-trigger-sleep) echo 'Usage: q-trigger-sleep' ;;
+    q-update) printf '%s\n' 'Usage: q-update [all|config|system|publish] [arguments]' \
+      '  config   pull and apply shared configuration' \
+      '  system   update repository and AUR packages' \
+      '  publish  capture, review, commit, and push portable changes' ;;
+    q-vol) echo 'Usage: q-vol [up|down|PERCENT|mute|unmute|toggle] [STEP]' ;;
+    q-help) echo 'Usage: q-help [COMMAND]' ;;
+    *) echo 'No detailed usage is registered yet; inspect the command with: less "$(command -v '"$name"')"' ;;
+  esac
+}
+
+case "${1:-}" in
+  '') show_overview ;;
+  --names) discover_commands ;;
+  -h|--help|help) printf '%s\n' 'Usage: q-help [COMMAND]' '' \
+    'Without a command, lists every installed q-* helper.' \
+    'COMMAND accepts either brightness or q-brightness.' ;;
+  *)
+    name=$1
+    [[ $name == q-* ]] || name="q-$name"
+    if ! command -v -- "$name" >/dev/null 2>&1; then
+      printf 'Unknown q command: %s\n\n' "$1" >&2
+      show_overview >&2
+      exit 2
+    fi
+    printf '%s — %s\n\n' "$name" "$(description_for "$name")"
+    show_usage "$name"
+    ;;
+esac

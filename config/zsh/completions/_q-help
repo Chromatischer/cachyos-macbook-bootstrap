@@ -1,0 +1,6 @@
+#compdef q-help
+
+local -a commands
+commands=( ${(f)"$(q-help --names)"} )
+commands=( ${commands#q-} )
+_values 'q command' $commands

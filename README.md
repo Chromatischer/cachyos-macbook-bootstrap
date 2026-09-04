@@ -30,6 +30,8 @@ q-update config                 # pull and apply config only
 q-update system                 # update CachyOS packages only
 q-update                        # do both
 q-update publish "config: note" # capture, review, commit, and push
+q-help                         # list every q-* helper
+q-help brightness              # show usage for one helper
 ```
 
 `publish` copies only an explicit allow-list. It deliberately skips monitor and
